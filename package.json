@@ -1,6 +1,6 @@
 {
   "name": "@ayhid/strapi-provider-email-brevo",
-  "version": "0.0.0-development",
+  "version": "1.0.0",
   "description": "Brevo (Sendinblue) email provider for Strapi v5 using Transactional Email API",
   "main": "index.js",
   "license": "MIT",
