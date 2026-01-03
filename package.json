@@ -2,7 +2,18 @@
   "name": "@ayhid/strapi-provider-email-brevo",
   "version": "1.0.0",
   "description": "Brevo (Sendinblue) email provider for Strapi v5 using Transactional Email API",
-  "main": "index.js",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "license": "MIT",
   "author": {
     "name": "Ayoub Hidri",
@@ -39,16 +50,24 @@
   "dependencies": {
     "@getbrevo/brevo": "^3.0.0"
   },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build",
+    "typecheck": "tsc --noEmit"
+  },
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
-    "semantic-release": "^25.0.0"
+    "@types/node": "^20.0.0",
+    "semantic-release": "^25.0.0",
+    "typescript": "^5.0.0"
   },
   "engines": {
     "node": ">=20.0.0"
   },
   "files": [
-    "index.js",
+    "dist",
     "README.md",
     "LICENSE"
   ],
