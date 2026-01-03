@@ -82,7 +82,7 @@ perf: optimize email parsing for large recipient lists
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/ayoub-hidri/strapi-provider-email-brevo.git
+   git clone https://github.com/ayhid/strapi-provider-email-brevo.git
    cd strapi-provider-email-brevo
    ```
 
