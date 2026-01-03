@@ -1,0 +1,80 @@
+{
+  "name": "strapi-provider-email-brevo",
+  "version": "0.0.0-development",
+  "description": "Brevo (Sendinblue) email provider for Strapi v5 using Transactional Email API",
+  "main": "index.js",
+  "license": "MIT",
+  "author": {
+    "name": "Ayoub Hidri",
+    "email": "ayoub.hidri@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ayoub-hidri/strapi-provider-email-brevo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ayoub-hidri/strapi-provider-email-brevo/issues"
+  },
+  "homepage": "https://github.com/ayoub-hidri/strapi-provider-email-brevo#readme",
+  "keywords": [
+    "strapi",
+    "strapi-provider",
+    "strapi-plugin",
+    "email",
+    "brevo",
+    "sendinblue",
+    "transactional-email",
+    "strapi-v5",
+    "strapi-email"
+  ],
+  "strapi": {
+    "name": "brevo",
+    "displayName": "Brevo Email Provider",
+    "description": "Send transactional emails via Brevo API with dev fallback",
+    "kind": "provider"
+  },
+  "peerDependencies": {
+    "@strapi/strapi": "^5.0.0"
+  },
+  "dependencies": {
+    "@getbrevo/brevo": "^3.0.0"
+  },
+  "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "semantic-release": "^24.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "index.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "release": {
+    "branches": [
+      "main"
+    ],
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/changelog",
+      "@semantic-release/npm",
+      [
+        "@semantic-release/git",
+        {
+          "assets": [
+            "package.json",
+            "CHANGELOG.md"
+          ],
+          "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+        }
+      ],
+      "@semantic-release/github"
+    ]
+  }
+}
