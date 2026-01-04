@@ -1,7 +1,7 @@
-# @ayhid/strapi-plugin-email-brevo
+# @ayhid/strapi-provider-email-brevo
 
-[![npm version](https://img.shields.io/npm/v/@ayhid/strapi-plugin-email-brevo.svg)](https://www.npmjs.com/package/@ayhid/strapi-plugin-email-brevo)
-[![npm downloads](https://img.shields.io/npm/dm/@ayhid/strapi-plugin-email-brevo.svg)](https://www.npmjs.com/package/@ayhid/strapi-plugin-email-brevo)
+[![npm version](https://img.shields.io/npm/v/@ayhid/strapi-provider-email-brevo.svg)](https://www.npmjs.com/package/@ayhid/strapi-provider-email-brevo)
+[![npm downloads](https://img.shields.io/npm/dm/@ayhid/strapi-provider-email-brevo.svg)](https://www.npmjs.com/package/@ayhid/strapi-provider-email-brevo)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Strapi v5](https://img.shields.io/badge/Strapi-v5-blue.svg)](https://strapi.io/)
 
@@ -20,7 +20,7 @@ Brevo (formerly Sendinblue) email plugin for **Strapi v5** with admin panel conf
 ## Installation
 
 ```bash
-npm install @ayhid/strapi-plugin-email-brevo
+npm install @ayhid/strapi-provider-email-brevo
 ```
 
 ## Configuration
