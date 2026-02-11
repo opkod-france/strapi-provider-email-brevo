@@ -1,59 +1,62 @@
 import type { Core } from '@strapi/strapi';
-import { PLUGIN_ID, validateSettings } from '../../../common';
+import type { Context } from 'koa';
+import { PLUGIN_ID, MaskedSettings, Settings, validateSettings, isValidEmail } from '../../../common';
+
+function maskSettings(settings: Settings): MaskedSettings {
+  return {
+    ...settings,
+    apiKey: settings.apiKey ? '••••••••' + settings.apiKey.slice(-4) : '',
+    hasApiKey: !!settings.apiKey,
+  };
+}
 
 const settingsController = ({ strapi }: { strapi: Core.Strapi }) => {
   const getService = () => strapi.plugin(PLUGIN_ID).service('settings');
 
   return {
-    async getSettings(ctx: any) {
+    async getSettings(ctx: Context) {
       try {
         const settings = await getService().getSettings();
-
-        // Mask API key for security (show only last 4 chars)
-        const maskedSettings = {
-          ...settings,
-          apiKey: settings.apiKey
-            ? '••••••••' + settings.apiKey.slice(-4)
-            : '',
-        };
-
-        ctx.body = maskedSettings;
+        ctx.body = maskSettings(settings);
       } catch (error) {
         ctx.throw(500, 'Failed to get settings');
       }
     },
 
-    async updateSettings(ctx: any) {
+    async updateSettings(ctx: Context) {
       try {
-        const { body } = ctx.request;
+        const body = ctx.request.body as Partial<Settings>;
 
-        // Validate settings
         const validation = validateSettings(body);
         if (!validation.valid) {
           ctx.throw(400, JSON.stringify(validation.errors));
         }
 
         const settings = await getService().updateSettings(body);
-        ctx.body = settings;
+        ctx.body = maskSettings(settings);
       } catch (error) {
-        if ((error as any).status === 400) {
+        if ((error as { status?: number }).status === 400) {
           throw error;
         }
         ctx.throw(500, 'Failed to update settings');
       }
     },
 
-    async testEmail(ctx: any) {
+    async testEmail(ctx: Context) {
       try {
-        const { to } = ctx.request.body;
+        const { to } = ctx.request.body as { to?: string };
 
         if (!to) {
           ctx.throw(400, 'Recipient email is required');
         }
 
+        if (!isValidEmail(to!)) {
+          ctx.throw(400, 'Invalid recipient email format');
+        }
+
         const emailService = strapi.plugin(PLUGIN_ID).service('email');
         await emailService.send({
-          to,
+          to: to!,
           subject: 'Brevo Email Test - Strapi',
           text: 'This is a test email from your Strapi Brevo Email plugin.',
           html: `
@@ -67,6 +70,9 @@ const settingsController = ({ strapi }: { strapi: Core.Strapi }) => {
 
         ctx.body = { success: true, message: 'Test email sent successfully' };
       } catch (error) {
+        if ((error as { status?: number }).status === 400) {
+          throw error;
+        }
         ctx.throw(500, (error as Error).message || 'Failed to send test email');
       }
     },

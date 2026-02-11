@@ -14,17 +14,20 @@ interface SendOptions {
 }
 
 let apiInstance: Brevo.TransactionalEmailsApi | null = null;
+let cachedApiKey: string | null = null;
 
 function getApiInstance(apiKey: string): Brevo.TransactionalEmailsApi {
-  if (!apiInstance) {
+  if (!apiInstance || cachedApiKey !== apiKey) {
     apiInstance = new Brevo.TransactionalEmailsApi();
     apiInstance.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, apiKey);
+    cachedApiKey = apiKey;
   }
   return apiInstance;
 }
 
 export function clearApiInstance() {
   apiInstance = null;
+  cachedApiKey = null;
 }
 
 function parseEmail(email: string): EmailAddress {

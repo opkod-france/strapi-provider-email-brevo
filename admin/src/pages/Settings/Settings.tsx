@@ -1,3 +1,4 @@
+import * as React from 'react';
 import {
   Box,
   Button,
@@ -9,84 +10,99 @@ import {
   Typography,
 } from '@strapi/design-system';
 import { Check, Mail } from '@strapi/icons';
-import { Layouts, Page, useNotification } from '@strapi/strapi/admin';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import { PLUGIN_ID, Settings, SettingsForm, DEFAULT_SETTINGS, validateSettings } from '../../../../common';
-import { useFetchClient } from '../../hooks/useFetchClient';
+import { Layouts, Page, useNotification, useFetchClient } from '@strapi/strapi/admin';
+import type { FetchError } from '@strapi/strapi/admin';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { PLUGIN_ID, MaskedSettings, SettingsForm, DEFAULT_SETTINGS, validateSettings } from '../../../../common';
+
+const QUERY_KEY = [PLUGIN_ID, 'settings'];
 
 const SettingsPage = () => {
   const { toggleNotification } = useNotification();
-  const queryClient = useQueryClient();
   const { get, put, post } = useFetchClient();
+  const queryClient = useQueryClient();
 
-  const [values, setValues] = useState<SettingsForm>(DEFAULT_SETTINGS);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSaving, setIsSaving] = useState(false);
-  const [isTesting, setIsTesting] = useState(false);
-  const [testEmail, setTestEmail] = useState('');
+  const [values, setValues] = React.useState<SettingsForm>(DEFAULT_SETTINGS);
+  const [errors, setErrors] = React.useState<Record<string, string>>({});
+  const [testEmail, setTestEmail] = React.useState('');
+  const [hasApiKey, setHasApiKey] = React.useState(false);
 
   // Fetch settings
-  const { isLoading } = useQuery({
-    queryKey: [PLUGIN_ID, 'settings'],
-    queryFn: async () => {
-      const response = await get(`/${PLUGIN_ID}/settings`);
-      return response.data as Settings;
+  const { isLoading, isError, error } = useQuery<MaskedSettings, FetchError>(
+    QUERY_KEY,
+    async () => {
+      const response = await get<MaskedSettings>(`/${PLUGIN_ID}/settings`);
+      return response.data;
     },
-    onSuccess: (data: Settings) => {
-      setValues({
-        ...DEFAULT_SETTINGS,
-        ...data,
-        // Keep the masked API key display but allow new input
-        apiKey: '',
-      });
-    },
-  });
+    {
+      onSuccess: (data: MaskedSettings) => {
+        setHasApiKey(data.hasApiKey);
+        setValues({
+          ...DEFAULT_SETTINGS,
+          ...data,
+          apiKey: '',
+        });
+      },
+    }
+  );
 
   // Save settings mutation
-  const saveMutation = useMutation({
-    mutationFn: async (payload: SettingsForm) => {
-      const response = await put(`/${PLUGIN_ID}/settings`, payload);
+  const saveMutation = useMutation<MaskedSettings, FetchError, SettingsForm>(
+    async (payload: SettingsForm) => {
+      const body: Partial<SettingsForm> = { ...payload };
+
+      // Only send apiKey if user typed a new one
+      if (!body.apiKey?.trim()) {
+        delete body.apiKey;
+      }
+
+      const response = await put<MaskedSettings>(`/${PLUGIN_ID}/settings`, body);
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [PLUGIN_ID, 'settings'] });
-      toggleNotification({
-        type: 'success',
-        message: 'Settings saved successfully',
-      });
-    },
-    onError: (error: any) => {
-      toggleNotification({
-        type: 'warning',
-        message: error?.message || 'Failed to save settings',
-      });
-    },
-  });
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(QUERY_KEY);
+        toggleNotification({
+          type: 'success',
+          message: 'Settings saved successfully',
+        });
+      },
+      onError: (err: FetchError) => {
+        toggleNotification({
+          type: 'warning',
+          message: err.message || 'Failed to save settings',
+        });
+      },
+    }
+  );
 
   // Test email mutation
-  const testMutation = useMutation({
-    mutationFn: async (to: string) => {
-      const response = await post(`/${PLUGIN_ID}/settings/test`, { to });
+  const testMutation = useMutation<{ success: boolean; message: string }, FetchError, string>(
+    async (to: string) => {
+      const response = await post<{ success: boolean; message: string }>(
+        `/${PLUGIN_ID}/settings/test`,
+        { to }
+      );
       return response.data;
     },
-    onSuccess: () => {
-      toggleNotification({
-        type: 'success',
-        message: 'Test email sent successfully',
-      });
-    },
-    onError: (error: any) => {
-      toggleNotification({
-        type: 'warning',
-        message: error?.message || 'Failed to send test email',
-      });
-    },
-  });
+    {
+      onSuccess: () => {
+        toggleNotification({
+          type: 'success',
+          message: 'Test email sent successfully',
+        });
+      },
+      onError: (err: FetchError) => {
+        toggleNotification({
+          type: 'warning',
+          message: err.message || 'Failed to send test email',
+        });
+      },
+    }
+  );
 
   const handleChange = (name: keyof SettingsForm, value: string | boolean) => {
     setValues((prev) => ({ ...prev, [name]: value }));
-    // Clear error when field is modified
     if (errors[name]) {
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -99,18 +115,19 @@ const SettingsPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const validation = validateSettings(values);
+    // For validation: if user didn't type a new key but one exists on server, skip apiKey validation
+    const toValidate = {
+      ...values,
+      apiKey: values.apiKey.trim() || (hasApiKey ? 'existing-key-placeholder' : ''),
+    };
+
+    const validation = validateSettings(toValidate);
     if (!validation.valid) {
       setErrors(validation.errors);
       return;
     }
 
-    setIsSaving(true);
-    try {
-      await saveMutation.mutateAsync(values);
-    } finally {
-      setIsSaving(false);
-    }
+    saveMutation.mutate(values);
   };
 
   const handleTestEmail = async () => {
@@ -122,16 +139,15 @@ const SettingsPage = () => {
       return;
     }
 
-    setIsTesting(true);
-    try {
-      await testMutation.mutateAsync(testEmail);
-    } finally {
-      setIsTesting(false);
-    }
+    testMutation.mutate(testEmail);
   };
 
   if (isLoading) {
-    return <Page.Loading>Loading settings...</Page.Loading>;
+    return <Page.Loading />;
+  }
+
+  if (isError) {
+    return <Page.Error message={error?.message} />;
   }
 
   const boxProps = {
@@ -152,8 +168,8 @@ const SettingsPage = () => {
             <Button
               type="submit"
               startIcon={<Check />}
-              loading={isSaving}
-              disabled={isSaving}
+              loading={saveMutation.isLoading}
+              disabled={saveMutation.isLoading}
             >
               Save
             </Button>
@@ -197,7 +213,7 @@ const SettingsPage = () => {
                       <TextInput
                         type="password"
                         name="apiKey"
-                        placeholder="xkeysib-xxxxxxxxxxxx"
+                        placeholder={hasApiKey ? 'Key is configured — leave blank to keep current' : 'xkeysib-xxxxxxxxxxxx'}
                         value={values.apiKey}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           handleChange('apiKey', e.target.value);
@@ -304,8 +320,8 @@ const SettingsPage = () => {
                         <Button
                           variant="secondary"
                           startIcon={<Mail />}
-                          loading={isTesting}
-                          disabled={isTesting || !values.apiKey}
+                          loading={testMutation.isLoading}
+                          disabled={testMutation.isLoading || (!values.apiKey && !hasApiKey)}
                           onClick={handleTestEmail}
                         >
                           Send Test

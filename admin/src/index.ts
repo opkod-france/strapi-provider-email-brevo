@@ -1,42 +1,29 @@
-import { PLUGIN_ID } from '../../common';
-import PluginIcon from './components/PluginIcon';
+import type { StrapiApp } from '@strapi/strapi/admin';
+import { PLUGIN_ID, permissions } from '../../common';
 import trads from './translations';
 
 export default {
-  register(app: any) {
-    // Create settings section
-    app.createSettingSection(
-      {
-        id: PLUGIN_ID,
-        intlLabel: {
-          id: `${PLUGIN_ID}.plugin.section`,
-          defaultMessage: 'Brevo Email',
-        },
+  register(app: StrapiApp) {
+    app.addSettingsLink('global', {
+      id: PLUGIN_ID,
+      intlLabel: {
+        id: `${PLUGIN_ID}.plugin.section.item`,
+        defaultMessage: 'Brevo Email',
       },
-      [
-        {
-          id: `${PLUGIN_ID}.plugin.section.item`,
-          intlLabel: {
-            id: `${PLUGIN_ID}.plugin.section.item`,
-            defaultMessage: 'Configuration',
-          },
-          to: `/settings/${PLUGIN_ID}`,
-          Component: () =>
-            import('./pages/Settings').then((mod) => ({ default: mod.SettingsPageWrapper })),
-        },
-      ]
-    );
+      to: PLUGIN_ID,
+      Component: () => import('./pages/Settings'),
+      permissions: [
+        { action: permissions.render(permissions.settings.read), subject: null },
+      ],
+    });
 
-    // Register the plugin
     app.registerPlugin({
       id: PLUGIN_ID,
       name: PLUGIN_ID,
     });
   },
 
-  bootstrap() {
-    // Bootstrap logic if needed
-  },
+  bootstrap() {},
 
   async registerTrads({ locales }: { locales: string[] }) {
     return Promise.all(

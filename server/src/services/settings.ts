@@ -36,7 +36,8 @@ const settingsService = ({ strapi }: { strapi: Core.Strapi }) => {
   async function getConfigFromDb(): Promise<Partial<Settings> | undefined> {
     try {
       return (await getPluginStore().get({ key: 'config' })) as Partial<Settings>;
-    } catch {
+    } catch (error) {
+      strapi.log.warn(`[${PLUGIN_ID}] Failed to read settings from database: ${(error as Error).message}`);
       return undefined;
     }
   }
@@ -61,14 +62,7 @@ const settingsService = ({ strapi }: { strapi: Core.Strapi }) => {
     return getSettings();
   }
 
-  async function restoreConfig(): Promise<Settings> {
-    const fileCfg = getConfigFromFile();
-    const store = getPluginStore();
-    await store.set({ key: 'config', value: fillWithDefaults(fileCfg) });
-    return getSettings();
-  }
-
-  return { getSettings, updateSettings, restoreConfig };
+  return { getSettings, updateSettings };
 };
 
 export default settingsService;

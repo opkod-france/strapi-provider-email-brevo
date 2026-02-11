@@ -1,7 +1,8 @@
 import type { Core } from '@strapi/strapi';
+import { clearApiInstance } from './services/email';
 
 const destroy = ({ strapi }: { strapi: Core.Strapi }) => {
-  // Cleanup on shutdown
+  clearApiInstance();
 };
 
 export default destroy;

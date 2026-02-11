@@ -1,1 +1,0 @@
-export { useFetchClient } from './useFetchClient';

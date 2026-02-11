@@ -7,7 +7,7 @@ export default {
         path: '/settings',
         handler: 'settings.getSettings',
         config: {
-          policies: [],
+          policies: ['admin::isAuthenticatedAdmin'],
         },
       },
       {
@@ -15,7 +15,7 @@ export default {
         path: '/settings',
         handler: 'settings.updateSettings',
         config: {
-          policies: [],
+          policies: ['admin::isAuthenticatedAdmin'],
         },
       },
       {
@@ -23,7 +23,7 @@ export default {
         path: '/settings/test',
         handler: 'settings.testEmail',
         config: {
-          policies: [],
+          policies: ['admin::isAuthenticatedAdmin'],
         },
       },
     ],

@@ -40,6 +40,18 @@ export interface Settings {
 }
 
 /**
+ * Masked settings returned by the API (never exposes the real API key)
+ */
+export interface MaskedSettings {
+  enabled: boolean;
+  apiKey: string;
+  defaultFrom: string;
+  defaultFromName: string;
+  defaultReplyTo: string;
+  hasApiKey: boolean;
+}
+
+/**
  * Settings form values (same as Settings for this plugin)
  */
 export type SettingsForm = Settings;
@@ -56,9 +68,16 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 /**
+ * Discriminated union for validation results
+ */
+export type ValidationResult =
+  | { valid: true; errors: Record<string, never> }
+  | { valid: false; errors: Record<string, string> };
+
+/**
  * Validation for settings
  */
-export function validateSettings(settings: Partial<Settings>): { valid: boolean; errors: Record<string, string> } {
+export function validateSettings(settings: Partial<Settings>): ValidationResult {
   const errors: Record<string, string> = {};
 
   if (settings.enabled) {
@@ -75,32 +94,15 @@ export function validateSettings(settings: Partial<Settings>): { valid: boolean;
     }
   }
 
-  return {
-    valid: Object.keys(errors).length === 0,
-    errors,
-  };
+  const valid = Object.keys(errors).length === 0;
+  return valid
+    ? { valid: true, errors: {} as Record<string, never> }
+    : { valid: false, errors };
 }
 
 /**
  * Simple email validation
  */
-function isValidEmail(email: string): boolean {
+export function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-}
-
-/**
- * Helper to safely execute async operations
- */
-export async function tryCatch<T>(
-  promise: Promise<T>,
-  onFinally?: () => void
-): Promise<T | undefined> {
-  try {
-    return await promise;
-  } catch (error) {
-    console.error('[Brevo]', error);
-    return undefined;
-  } finally {
-    onFinally?.();
-  }
 }
