@@ -1,3 +1,9 @@
+## [3.1.1](https://github.com/opkod-france/strapi-provider-email-brevo/compare/v3.1.0...v3.1.1) (2026-02-13)
+
+### Bug Fixes
+
+* add missing conventional-changelog-conventionalcommits dependency ([1a4b998](https://github.com/opkod-france/strapi-provider-email-brevo/commit/1a4b998bfcbd14c1ec79ac110e58263038b5c157))
+
 # [3.0.0](https://github.com/ayhid/strapi-provider-email-brevo/compare/v2.0.0...v3.0.0) (2026-01-04)
 
 
