@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="logo.png" alt="Brevo Email Plugin" width="200" />
+</p>
+
 # @opkod-france/strapi-provider-email-brevo
 
 [![npm version](https://img.shields.io/npm/v/@opkod-france/strapi-provider-email-brevo.svg)](https://www.npmjs.com/package/@opkod-france/strapi-provider-email-brevo)
