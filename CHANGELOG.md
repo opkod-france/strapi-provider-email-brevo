@@ -1,3 +1,14 @@
+## [4.0.0](https://github.com/opkod-france/strapi-provider-email-brevo/compare/v3.1.1...v4.0.0) (2026-02-13)
+
+### ⚠ BREAKING CHANGES
+
+* Package renamed from @ayhid/strapi-provider-email-brevo
+to @opkod-france/strapi-provider-email-brevo. Update your dependencies accordingly.
+
+### Features
+
+* publish under [@opkod-france](https://github.com/opkod-france) npm scope ([92b12e8](https://github.com/opkod-france/strapi-provider-email-brevo/commit/92b12e8519a1847e25dbac4a18ea0b5485d19125))
+
 ## [3.1.1](https://github.com/opkod-france/strapi-provider-email-brevo/compare/v3.1.0...v3.1.1) (2026-02-13)
 
 ### Bug Fixes
