@@ -1,5 +1,5 @@
 import type { Core } from '@strapi/strapi';
-import * as Brevo from '@getbrevo/brevo';
+import { BrevoClient, Brevo } from '@getbrevo/brevo';
 import { PLUGIN_ID, EmailAddress, Settings } from '../../../common';
 
 interface SendOptions {
@@ -13,20 +13,19 @@ interface SendOptions {
   html?: string;
 }
 
-let apiInstance: Brevo.TransactionalEmailsApi | null = null;
+let clientInstance: BrevoClient | null = null;
 let cachedApiKey: string | null = null;
 
-function getApiInstance(apiKey: string): Brevo.TransactionalEmailsApi {
-  if (!apiInstance || cachedApiKey !== apiKey) {
-    apiInstance = new Brevo.TransactionalEmailsApi();
-    apiInstance.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, apiKey);
+function getClient(apiKey: string): BrevoClient {
+  if (!clientInstance || cachedApiKey !== apiKey) {
+    clientInstance = new BrevoClient({ apiKey });
     cachedApiKey = apiKey;
   }
-  return apiInstance;
+  return clientInstance;
 }
 
 export function clearApiInstance() {
-  apiInstance = null;
+  clientInstance = null;
   cachedApiKey = null;
 }
 
@@ -81,67 +80,50 @@ const emailService = ({ strapi }: { strapi: Core.Strapi }) => {
       throw new Error('Brevo API key not configured');
     }
 
-    const api = getApiInstance(settings.apiKey);
-    const sendSmtpEmail = new Brevo.SendSmtpEmail();
+    const client = getClient(settings.apiKey);
 
-    // Required fields
-    sendSmtpEmail.subject = options.subject;
-    sendSmtpEmail.to = parseRecipients(options.to);
-
-    // Sender
+    // Build sender
     const senderEmail = options.from || settings.defaultFrom;
-    if (senderEmail) {
-      sendSmtpEmail.sender = parseEmail(senderEmail);
-      if (settings.defaultFromName && !sendSmtpEmail.sender.name) {
-        sendSmtpEmail.sender.name = settings.defaultFromName;
-      }
+    const sender = senderEmail ? parseEmail(senderEmail) : undefined;
+    if (sender && settings.defaultFromName && !sender.name) {
+      sender.name = settings.defaultFromName;
     }
 
-    // Content
-    if (options.html) {
-      sendSmtpEmail.htmlContent = options.html;
-    }
-    if (options.text) {
-      sendSmtpEmail.textContent = options.text;
-    }
-
-    // Optional fields
-    if (options.replyTo) {
-      sendSmtpEmail.replyTo = parseEmail(options.replyTo);
-    } else if (settings.defaultReplyTo) {
-      sendSmtpEmail.replyTo = parseEmail(settings.defaultReplyTo);
-    }
-
-    if (options.cc) {
-      sendSmtpEmail.cc = parseRecipients(options.cc);
-    }
-
-    if (options.bcc) {
-      sendSmtpEmail.bcc = parseRecipients(options.bcc);
-    }
+    // Build replyTo
+    const replyTo = options.replyTo
+      ? parseEmail(options.replyTo)
+      : settings.defaultReplyTo
+        ? parseEmail(settings.defaultReplyTo)
+        : undefined;
 
     try {
-      const response = await api.sendTransacEmail(sendSmtpEmail);
-      console.log(`[Brevo] Email sent successfully. MessageId: ${response.body.messageId}`);
+      const response = await client.transactionalEmails.sendTransacEmail({
+        subject: options.subject,
+        to: parseRecipients(options.to),
+        sender,
+        htmlContent: options.html,
+        textContent: options.text,
+        replyTo,
+        cc: options.cc ? parseRecipients(options.cc) : undefined,
+        bcc: options.bcc ? parseRecipients(options.bcc) : undefined,
+      });
+      console.log(`[Brevo] Email sent successfully. MessageId: ${response.messageId}`);
     } catch (error) {
-      const err = error as {
-        message?: string;
-        statusCode?: number;
-        body?: { code?: string };
-      };
-
-      console.error('[Brevo] Failed to send email:', err.message || 'Unknown error');
-
-      if (err.statusCode === 401) {
+      if (error instanceof Brevo.UnauthorizedError) {
+        console.error('[Brevo] Failed to send email: Unauthorized');
         throw new Error('EMAIL_API_UNAUTHORIZED');
       }
-      if (err.statusCode === 429) {
+      if (error instanceof Brevo.TooManyRequestsError) {
+        console.error('[Brevo] Failed to send email: Rate limited');
         throw new Error('EMAIL_RATE_LIMITED');
       }
-      if (err.body?.code === 'invalid_parameter') {
+      if (error instanceof Brevo.BadRequestError) {
+        console.error('[Brevo] Failed to send email: Bad request');
         throw new Error('EMAIL_INVALID_RECIPIENT');
       }
 
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[Brevo] Failed to send email:', message);
       throw new Error('EMAIL_SEND_FAILED');
     }
   }

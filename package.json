@@ -60,7 +60,7 @@
     "kind": "plugin"
   },
   "dependencies": {
-    "@getbrevo/brevo": "^3.0.0"
+    "@getbrevo/brevo": "^5.0.3"
   },
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.3",
